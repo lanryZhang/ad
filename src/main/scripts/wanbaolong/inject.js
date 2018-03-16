@@ -1,0 +1,1 @@
+EB._adConfig.interactions.clickthrough.target = '_self'
