@@ -45,9 +45,9 @@ if (args.length < 2) {
     var ua = args[3];
     ua = ua.replace(new RegExp("@", "gm"), " ").replace(new RegExp("\x22", "gm"), "");
     page.settings.userAgent = ua;
-    if (en.referer !== "" && en.referer !== null) {
-        page.settings.referrer = en.referer;
-    }
+
+    page.settings.referrer = en.referer;
+
 
     // page.settings.loadImages = false;
 
@@ -64,23 +64,43 @@ if (args.length < 2) {
     };
 
     page.onConsoleMessage = function(msg, lineNum, sourceId) {
-        if (msg.toString() === "dom_finished"){
+        if (msg.toString() === "dom_finished") {
             loadFinished = true;
         }
         console.log(msg);
 
-        if (msg.indexOf("creativeData:") >= 0){
-            msg = msg.replace("creativeData:","");
-            var scriptInject = "a("+msg+")";
+        if (msg.indexOf("creativeData:") >= 0) {
+            msg = msg.replace("creativeData:", "");
 
             page.switchToParentFrame();
 
-            console.log("scriptInject:"+scriptInject)
             if (page.injectJs(en.scriptPath)) {
+
                 page.evaluate(function (dt) {
                     a(JSON.parse(dt));
                     opendsp_click();
+                    console.log("open success");
                 }, msg)
+
+
+                window.setTimeout(function () {
+
+                    if ("" !== en.behaviourData && null !== en.behaviourData) {
+                        en.behaviourData = decodeURIComponent(en.behaviourData);
+                        var seed = Math.random();
+                        var rand = Math.round(seed * 100);
+                        if (rand < 70) {
+                            if (page.injectJs(en.scriptPath)) {
+                                var dt = JSON.parse(en.behaviourData);
+                                // console.log("for monitor: behaviourData---"+arr[0]);
+                                //conso
+                                page.evaluate(function (data) {
+                                    cacheEvent(data)
+                                }, dt);
+                            }
+                        }
+                    }
+                }, 3 * 1000);
             }
         }
     };
@@ -112,16 +132,7 @@ if (args.length < 2) {
 
 
     page.onResourceReceived = function(response) {
-        // console.log('Response (#' + response.id + ', stage "' + response.stage + '"): ' + JSON.stringify(response));
-        if (en.taskType === "EV"){
-            if (response.url === "https://phs.tanx.com/ex?i=mm_12229823_1573806_148756418") {
-                forceSuccess = true;
-            }
-        }else{
-            if (response.url === "https://atanx2.alicdn.com/g/mm/dsp/dongfeng/tmpl/default.js"){
-                forceSuccess = true;
-            }
-        }
+
     };
 
     // page.settings.resourceTimeout = en.waitTimeout * 1000;
@@ -147,18 +158,16 @@ if (args.length < 2) {
         //var timestamp=new Date().getTime();
         var subFragments = task.subFragments;
         // console.log(JSON.stringify(task))
-        if (task.referer !== "" && task.referer !== null) {
-            page.settings.referrer = task.referer;
-        }
+        page.settings.referrer = task.referer;
         taskCount = taskCount - 1;
         page.open(task.url, function (status) {
 
             times = times + task.waitTimeout;
 
             var navigateError = false;
-            if (page.url.indexOf("http://ifengad.3g.ifeng.com") >= 0
-            && page.url === task.url){
+            if (page.url.indexOf("http://ifengad.3g.ifeng.com") >= 0 && page.url === task.url) {
                 navigateError = true;
+                console.log("for monitor: system error, response "+status+",url do not changed,taskId:"+task.taskId);
             }
 
             if ((loadFinished || status === "success" || forceSuccess) && !adError && !navigateError) {
@@ -173,18 +182,19 @@ if (args.length < 2) {
 
                 console.log("cookie:" + JSON.stringify(cookiesRes));
                 if (successCount === taskCountFinal) {
-                    console.log("open success");
+                    // console.log("open success");
                     if (task.taskType === "CLICK") {
                         window.setTimeout(function () {
 
-                            page.switchToFrame("tanxssp-outer-iframemm_12229823_1573806_148756418");
+                            page.switchToFrame(task.finishedFlag);
                             page.evaluate(function () {
                                 console.log("creativeData:"+JSON.stringify(creativeData));
                             });
                         },6000)
+                    }else{
+                        console.log("open success");
                     }
                 }
-
             } else {
                 // page.render("/data/images/page_error_"+task.taskId+"_"+timestamp+".png");
                 console.log("open error");

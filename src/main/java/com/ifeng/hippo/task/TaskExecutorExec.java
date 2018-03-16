@@ -57,16 +57,19 @@ public class TaskExecutorExec extends AbsExecutor{
         if (tf == null ||processorGenerator == null) {
             return;
         }
+        /** 如果当前时间不在任务执行时间段内跳过任务 */
         if (!checkTimePair(tf)){
             return;
         }
         ProcessEx process = null;
         try {
+            /** 生成任务执行体 */
             process = processorGenerator.generate(tf);
             if (process == null){
                 logger.debug("no process available");
                 return ;
             }
+            /** 开始执行任务 */
             execute(tf, process);
 
         } catch (Exception er) {
@@ -74,6 +77,11 @@ public class TaskExecutorExec extends AbsExecutor{
         }
     }
 
+    /**
+     * 判断当前时间是否在任务执行时间段内
+     * @param tf
+     * @return
+     */
     private boolean checkTimePair(TaskFragment tf){
         if (tf.getTimePairs() == null || tf.getTimePairs().size() == 0){
             return true;
@@ -83,7 +91,7 @@ public class TaskExecutorExec extends AbsExecutor{
         int now = Integer.valueOf(DateUtil.format(new Date(),"HHmm"));
         for(TimePair tp:tf.getTimePairs()){
             if(now >= tp.getBeginTime() &&
-                    now <= (tp.getEndTime() - 9)){
+                    now <= tp.getEndTime()){
                 inTimePair = true;
                 break;
             }
@@ -106,6 +114,7 @@ public class TaskExecutorExec extends AbsExecutor{
                 while ((line = reader.readLine()) != null) {
                     logger.debug(line);
                     processConsoleMessage(line,tf,process);
+
                 }
             }catch (Exception er){
                 er.printStackTrace();
@@ -113,6 +122,7 @@ public class TaskExecutorExec extends AbsExecutor{
             }finally {
                 if (reader != null){
                     reader.close();
+                    process.destroy();
                 }
             }
         }catch (TimeoutException er){
@@ -122,6 +132,12 @@ public class TaskExecutorExec extends AbsExecutor{
         }
     }
 
+    /**
+     *
+     * @param line
+     * @param tf
+     * @param process
+     */
     private void processConsoleMessage(String line,TaskFragment tf , ProcessEx process){
         long uaId = process.getUserAgentInfo().getId();
         String cookieKey = String.format(RedisPrefix.TASK_PROXY_COOKIE_PREFIX, tf.getTaskId(),uaId);
@@ -133,6 +149,18 @@ public class TaskExecutorExec extends AbsExecutor{
             String proxyIdListKey = process.getProxyPoolKey();
             if ("".equals(proxyIdListKey) || null == proxyIdListKey) {
                 proxyIdListKey = tf.getTaskType() == TaskType.EV ? RedisPrefix.PROXY_IP_LIST_EV_IDC : RedisPrefix.PROXY_IP_LIST_IDC;
+                /**
+                 * 如果是独享代理池的话，改为独享代理池key，如果是指定代理改为指定代理key
+                 */
+                if (tf.getAppointProxyName() != null && tf.getAppointProxyName().size() > 0){
+                    proxyIdListKey = RedisPrefix.PROXY_IP_LIST_IDC_APPOINT;
+                    proxyIdListKey = proxyIdListKey + "_" + tf.getTaskId();
+                    logger.debug("change proxyKey to appoint for :" + tf.getTaskId());
+                } else if (tf.getExclusiveProxy() == 1) {
+                    proxyIdListKey = RedisPrefix.PROXY_IP_LIST_IDC_EXCLUSIVE;
+                    proxyIdListKey = proxyIdListKey + "_" + tf.getTaskId();
+                    logger.debug("change proxyKey to exclusive for :" + tf.getTaskId());
+                }
                 proxyIdListKey = String.format(proxyIdListKey,process.getProxy().getNetName());
             }
 
@@ -208,6 +236,7 @@ public class TaskExecutorExec extends AbsExecutor{
     }
 
     private void execute(TaskFragment tf , ProcessEx process) throws Exception {
+        /** 按照任务类型选择对应的执行方式 */
         if (tf.getRequestType() == RequestType.HTTP_CLIENT){
             processHttpClientInputStream(tf,process);
         }else{

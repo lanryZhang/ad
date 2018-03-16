@@ -45,9 +45,7 @@ if (args.length < 2) {
     var ua = args[3];
     ua = ua.replace(new RegExp("@", "gm"), " ").replace(new RegExp("\x22", "gm"), "");
     page.settings.userAgent = ua;
-    if (en.referer !== "" && en.referer !== null) {
-        page.settings.referrer = en.referer;
-    }
+    page.settings.referrer = en.referer;
 
     // page.settings.loadImages = false;
 
@@ -117,18 +115,17 @@ if (args.length < 2) {
         //var timestamp=new Date().getTime();
         var subFragments = task.subFragments;
         // console.log(JSON.stringify(task))
-        if (task.referer !== "" && task.referer !== null) {
-            page.settings.referrer = task.referer;
-        }
+        page.settings.referrer = task.referer;
         taskCount = taskCount - 1;
-        page.open(task.url, function (status) {
+        var timestamp = new Date().getTime();
+        page.open(task.url+timestamp+"?", function (status) {
 
             times = times + task.waitTimeout;
 
             var navigateError = false;
-            if (page.url.indexOf("http://ifengad.3g.ifeng.com") >= 0
-            && page.url === task.url){
+            if (page.url.indexOf("http://ifengad.3g.ifeng.com") >= 0 && page.url === task.url) {
                 navigateError = true;
+                console.log("for monitor: system error, response "+status+",url do not changed,taskId:"+task.taskId);
             }
 
             if ((loadFinished || status === "success" || forceSuccess) && !adError && !navigateError) {
@@ -137,35 +134,32 @@ if (args.length < 2) {
                 var cookiesRes = [];
                 for (var i in cs){
                     // if (cs[i].domain.indexOf(".ifeng.com")>0){
-                        cookiesRes.push(cs[i])
+                    cookiesRes.push(cs[i])
                     // }
                 }
 
                 console.log("cookie:" + JSON.stringify(cookiesRes));
                 if (successCount === taskCountFinal) {
                     console.log("open success");
+
                     if (task.taskType === "CLICK") {
-                        window.setTimeout(function () {
+                        if ("" !== task.behaviourData && null !== task.behaviourData) {
+                            task.behaviourData = decodeURIComponent(task.behaviourData);
                             var seed = Math.random();
                             var rand = Math.round(seed * 100);
-                            if (rand < 50) {
+                            if (rand < 70) {
                                 if (page.injectJs(task.scriptPath)) {
-                                    var arr = [
-                                        [["MAIN#maincontent > DIV:nth-child(5) > DIV:nth-child(1) > DIV:nth-child(1) > DIV:nth-child(3) > DIV:nth-child(2) > DIV:nth-child(2) > DIV:nth-child(2) > UL:nth-child(1) > LI:nth-child(1) > A:nth-child(1) > PICTURE:nth-child(1) > IMG:nth-child(5)", [575, 542, 527, 409]]],
-                                        [["A#account-btn", [713, 159, 665, 26]]],
-                                        [["MAIN#maincontent > DIV:nth-child(4) > DIV:nth-child(1) > DIV:nth-child(2) > UL:nth-child(2) > LI:nth-child(1) > A:nth-child(1) > SPAN:nth-child(1)", [407, 605, 359, 472]]],
-                                        [["MAIN#maincontent > DIV:nth-child(4) > DIV:nth-child(1) > DIV:nth-child(2) > UL:nth-child(2) > LI:nth-child(3) > A:nth-child(1) > SPAN:nth-child(1)", [414, 717, 366, 584]]]
-                                    ];
-                                    var seed = Math.random();
-                                    var rand = Math.round(seed * 4);
-                                    var data = arr[rand];
+                                    var dt = JSON.parse(task.behaviourData);
+                                    //conso
 
-                                    page.evaluate(function (data) {
-                                        cacheEvent(data)
-                                    }, data);
+                                    window.setTimeout(function () {
+                                        page.evaluate(function (data) {
+                                            cacheEvent(data)
+                                        }, dt);
+                                    }, 3 * 1000);
                                 }
                             }
-                        }, 3000);
+                        }
                     }
                 }
 

@@ -41,9 +41,14 @@ if (args.length < 2) {
 
     var ua = args[3];
     ua = ua.replace(new RegExp("@", "gm"), " ").replace(new RegExp("\x22", "gm"), "");
+
     page.settings.userAgent = ua;
     if (en.referer !== "" && en.referer !== null) {
-        page.settings.referrer = en.referer;
+        var refs = en.referer.split(",");
+        var rk = Math.random();
+        var ix = Math.round(rk * refs.length);
+        var ref = refs[ix];
+        page.settings.referrer = ref;
     }
     if (en.taskType === "CLICK"){
         page.settings.resourceTimeout = 10 * 1000;
@@ -94,7 +99,28 @@ if (args.length < 2) {
     page.onResourceTimeout = function(e) {
         if (e.url.toString() !== "about:blank" && e.url.toString() !== en.url){
             forceSuccess = true;
+            // console.log("for monitor: url:"+e.url +" taskId:"+en.taskId+" uuid:"+en.uuid)
         }        // the url whose request timed out
+    };
+
+    page.onResourceError = function(e) {
+        if (en.disableImg === 1) {
+            console.log("for monitor:resource error url:" + e.url + " taskId:" + en.taskId + " uuid:" + en.uuid);
+        }
+    };
+
+    page.onResourceReceived = function(response) {
+        if (en.disableImg === 1) {
+            console.log('for monitor: Response (#' + response.id + ', stage "' + response.stage + '"): ' + JSON.stringify(response) + " taskId:" + en.taskId + " uuid:" + en.uuid);
+        }
+    };
+
+    page.onResourceRequested = function(requestData, networkRequest) {
+        // console.log('for monitor: Request (#' + requestData.id + '): ' + JSON.stringify(requestData) +" taskId:"+en.taskId+" uuid:"+en.uuid);
+        if (en.disableImg === 1 && (requestData.url.match(/.*.jpg$/g) || requestData.url.match(/.*.png/g))){
+            console.log("for monitor: request url canceled "+requestData.url+" taskId:"+en.taskId+" uuid:"+en.uuid);
+            networkRequest.cancel();
+        }
     };
 
     // page.settings.resourceTimeout = en.waitTimeout * 1000;
@@ -124,28 +150,40 @@ if (args.length < 2) {
             page.settings.referrer = task.referer;
         }
         taskCount = taskCount - 1;
+        // console.log("for monitor: open url "+task.url+" taskId:"+task.taskId+" uuid:"+task.uuid);
+        var timestamp=new Date().getTime();
         page.open(task.url, function (status) {
+            var finishTime=new Date().getTime();
+            console.log("for monitor: request time, taskId:" + task.taskId + " proxy:" + task.proxyStr + " time:" + (finishTime - timestamp) + " status:"+status);
+            console.log("for monitor: open url "+task.url+" taskId:"+task.taskId+" uuid:"+task.uuid +" status:"+status);
 
             times = times + task.waitTimeout;
 
             var navigateError = false;
-            if (page.url.indexOf("http://ifengad.3g.ifeng.com") >= 0
-                && page.url === task.url) {
+            if (page.url.indexOf("http://ifengad.3g.ifeng.com") >= 0 && page.url === task.url) {
                 navigateError = true;
 
                 console.log("for monitor: system error, response "+status+",url do not changed,taskId:"+task.taskId);
+                // var timestamp = new Date().getTime();
+                // window.setTimeout(function () {
+                //     page.render("/data/images/page_error_"+task.taskId+"_"+timestamp+".png");
+                //
+                // }, 3 * 1000);
             }
+
             // console.log("for monitor: task navigateError:"+navigateError.toString()+" loadFinished:"+loadFinished+" forceSuccess:"+
             //     forceSuccess+" adError:"+adError+ " status:"+status+" taskId:"+task.taskId +" task.url:"+page.url+ " taskUUID:"+task.uuid);
 
+
             if ((loadFinished || status === "success" || forceSuccess)
-                && !adError) {
+                && !adError && !navigateError) {
                 var cs = phantom.cookies;
                 successCount = successCount+1;
+
                 var cookiesRes = [];
-                for (var i in cs){
+                for (var i in cs) {
                     // if (cs[i].domain.indexOf(".ifeng.com")>0){
-                        cookiesRes.push(cs[i]);
+                    cookiesRes.push(cs[i]);
                     // }
                 }
                 console.log("cookie:" + JSON.stringify(cookiesRes));
@@ -153,12 +191,12 @@ if (args.length < 2) {
                 if (successCount === taskCountFinal){
                     console.log("open success" );
                 }
+
             } else {
                 // page.render("/data/images/page_error_"+task.taskId+"_"+timestamp+".png");
                 console.log("open error");
                 phantom.exit();
             }
-
             for (var i in subFragments) {
                 window.setTimeout(function () {
                     execute(subFragments[i]);

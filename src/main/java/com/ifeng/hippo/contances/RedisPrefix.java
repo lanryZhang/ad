@@ -35,7 +35,6 @@ public class RedisPrefix {
      */
     public final static String PROXY_IP_LIST_EV = "proxy_ip_list_ev";
 
-
     /**
      * 代理列表--运营商
      */
@@ -45,6 +44,16 @@ public class RedisPrefix {
      * 曝光量--代理列表--运营商
      */
     public final static String PROXY_IP_LIST_EV_IDC = "proxy_ip_list_ev_%s";
+
+    /**
+     * 代理列表--运营商--独享代理池
+     */
+    public final static String PROXY_IP_LIST_IDC_EXCLUSIVE = "proxy_ip_list_exclusive_%s";
+
+    /**
+     * 代理列表--运营商--指定代理商
+     */
+    public final static String PROXY_IP_LIST_IDC_APPOINT = "proxy_ip_list_appoint_%s";
 
 
     /**
@@ -93,7 +102,6 @@ public class RedisPrefix {
 
     public final static String VPS_HOST_PREFIX = "vps_host_%s";
 
-
     public final static String SHANGHAI_RECONNECT_PROXY_LIST = "shanghai_reconnect_proxy_list";
 
     public final static String ASSIGN_NUMBER_PREFIX="assign_number_prefix_%s_%s";
@@ -103,4 +111,11 @@ public class RedisPrefix {
 
     public final static String DEVICE_ID_IOS_SUCCESS_PREFIX = "device_id_ios_success_%s";
     public final static String DEVICE_ID_ANDROID_SUCCESS_PREFIX = "device_id_android_success_%s";
+
+    public final static String ASSIGN_LIST = "assign_list";
+    public final static String TAGS_DEVICE_FLAG = "tags_device_flag_%s";
+    public final static String TAGS_DEVICE_LIST = "tags_device_list_%s";
+    public final static String PC_TAGS_PREFIX = "pc_tags";
+    public final static String WAP_TAGS_PREFIX = "wap_tags";
+
 }

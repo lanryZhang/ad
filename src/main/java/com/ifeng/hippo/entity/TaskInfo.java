@@ -115,6 +115,18 @@ public class TaskInfo implements IEncode, IDecode{
     private String groupId;
 
     private int forceWait;
+    /**
+     * 是否独享代理池
+     */
+    private int exclusiveProxy;
+    /**
+     * 指定代理，默认为“”
+     */
+    private List<String> appointProxyName;
+    /**
+     * 监测代码，API特有
+     */
+    private String detectionCode;
     private List<Integer> provinces;
     private int forceArrive;
 
@@ -125,6 +137,84 @@ public class TaskInfo implements IEncode, IDecode{
     private String api;
 
     private String mainScriptPath;
+    private String behaviourData;
+
+    /**
+     * 用户兴趣标签
+     */
+    private List<Integer> interest;
+
+    /**
+     * 用户信息标签
+     */
+    private List<Integer> userInfo;
+    /**
+     * 是否禁用图片
+     */
+    private int disableImg;
+
+    public int getDisableImg() {
+        return disableImg;
+    }
+
+    public void setDisableImg(int disableImg) {
+        this.disableImg = disableImg;
+    }
+
+    /**
+     * 行为数据互动比例
+     */
+    private int activeProportion;
+    /**
+     * 脚本互动比例
+     */
+    private int shellProportion;
+
+
+    public int getActiveProportion() {
+        return activeProportion;
+    }
+
+    public void setActiveProportion(int activeProportion) {
+        this.activeProportion = activeProportion;
+    }
+
+    public int getShellProportion() {
+        return shellProportion;
+    }
+
+    public void setShellProportion(int shellProportion) {
+        this.shellProportion = shellProportion;
+    }
+
+    /**
+     * 可执行脚本
+     */
+    private String executeScript;
+
+    public String getDetectionCode() {
+        return detectionCode;
+    }
+
+    public void setDetectionCode(String detectionCode) {
+        this.detectionCode = detectionCode;
+    }
+
+    public String getExecuteScript() {
+        return executeScript;
+    }
+
+    public void setExecuteScript(String executeScript) {
+        this.executeScript = executeScript;
+    }
+
+    public String getBehaviourData() {
+        return behaviourData;
+    }
+
+    public void setBehaviourData(String behaviourData) {
+        this.behaviourData = behaviourData;
+    }
 
     public String getMainScriptPath() {
         return mainScriptPath;
@@ -430,6 +520,38 @@ public class TaskInfo implements IEncode, IDecode{
         this.referer = referer;
     }
 
+    public int getExclusiveProxy() {
+        return exclusiveProxy;
+    }
+
+    public void setExclusiveProxy(int exclusiveProxy) {
+        this.exclusiveProxy = exclusiveProxy;
+    }
+
+    public List<String> getAppointProxyName() {
+        return appointProxyName;
+    }
+
+    public void setAppointProxyName(List<String> appointProxyName) {
+        this.appointProxyName = appointProxyName;
+    }
+
+    public List<Integer> getInterest() {
+        return interest;
+    }
+
+    public void setInterest(List<Integer> interest) {
+        this.interest = interest;
+    }
+
+    public List<Integer> getUserInfo() {
+        return userInfo;
+    }
+
+    public void setUserInfo(List<Integer> userInfo) {
+        this.userInfo = userInfo;
+    }
+
     @Override
     public void decode(ILoader loader) {
         this.setUrl(loader.getString("url"));
@@ -452,6 +574,12 @@ public class TaskInfo implements IEncode, IDecode{
 
         ArrayList<Integer> provinces = (ArrayList) loader.getObject("provinces");
         this.setProvinces(provinces);
+
+        ArrayList<Integer> interest = (ArrayList) loader.getObject("interest");
+        this.setInterest(interest);
+
+        ArrayList<Integer> userInfo = (ArrayList) loader.getObject("userInfo");
+        this.setUserInfo(userInfo);
 
         List<TimePair> tps = new ArrayList<>();
         ArrayList<Document> list = (ArrayList) loader.getObject("timePairs");
@@ -493,10 +621,19 @@ public class TaskInfo implements IEncode, IDecode{
         this.setOverflowRate(loader.getInt("overflowRate"));
         this.setGroupId(loader.getString("creatorGroupId"));
         this.setForceWait(loader.getInt("forceWait"));
+        this.setExclusiveProxy(loader.getInt("exclusiveProxy"));
+        ArrayList<String> appointProxyList = (ArrayList<String>) loader.getObject("appointProxyName");
+        this.setAppointProxyName(appointProxyList);
         this.setForceArrive(loader.getInt("forceArrive"));
         this.setTaskSource(TaskSource.valueOf("".equals(loader.getString("taskSource")) ? "IFENGAD" : loader.getString("taskSource").toUpperCase()));
         this.setApi(loader.getString("api"));
         this.setMainScriptPath(loader.getString("mainScriptPath"));
+        this.setBehaviourData(loader.getString("behaviourData"));
+        this.setExecuteScript(loader.getString("executeScript"));
+        this.setDisableImg(loader.getInt("disableImg"));
+        this.setShellProportion(loader.getInt("shellProportion"));
+        this.setActiveProportion(loader.getInt("activeProportion"));
+        this.setDetectionCode(loader.getString("detectionCode"));
     }
 
     @Override
@@ -522,6 +659,8 @@ public class TaskInfo implements IEncode, IDecode{
         doc.put("beginDate",this.beginDate);
         doc.put("endDate",this.endDate);
         doc.put("filtration",this.filtration);
+        doc.put("userInfo",this.userInfo);
+        doc.put("interest",this.interest);
 
         List<Document> timePairs = new ArrayList();
         for (TimePair tp: this.timePairs) {
@@ -556,6 +695,9 @@ public class TaskInfo implements IEncode, IDecode{
         doc.put("overflowRate",this.overflowRate);
         doc.put("creatorGroupId",this.groupId);
         doc.put("forceWait",this.forceWait);
+        doc.put("exclusiveProxy",this.exclusiveProxy);
+        doc.put("appointProxyName",this.appointProxyName);
+        doc.put("detectionCode", this.detectionCode);
         return doc;
     }
 }

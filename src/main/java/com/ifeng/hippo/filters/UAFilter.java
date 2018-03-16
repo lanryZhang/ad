@@ -5,11 +5,10 @@
 */
 package com.ifeng.hippo.filters;
 
-import com.alibaba.fastjson.JSON;
 import com.ifeng.configurable.Context;
 import com.ifeng.hippo.contances.DeviceInfo;
-import com.ifeng.hippo.contances.RedisPrefix;
 import com.ifeng.hippo.contances.Platform;
+import com.ifeng.hippo.contances.RedisPrefix;
 import com.ifeng.hippo.core.IFilter;
 import com.ifeng.hippo.entity.PercentEntity;
 import com.ifeng.hippo.entity.TaskFragment;
@@ -17,7 +16,6 @@ import com.ifeng.hippo.entity.UserAgentInfo;
 import com.ifeng.hippo.mongo.MongoFactory;
 import com.ifeng.hippo.proxy.Proxy;
 import com.ifeng.hippo.redis.RedisFactory;
-import com.ifeng.hippo.utils.DateUtil;
 import com.ifeng.mongo.MongoCli;
 import com.ifeng.mongo.MongoSelect;
 import com.ifeng.redis.RedisClient;
@@ -56,27 +54,27 @@ public class UAFilter implements IFilter {
             map = uaPcMap;
         }
         long v = 0;
-        try {
-            v = Long.valueOf(redisClient.getString(RedisPrefix.UA_VERSION));
-        } catch (Exception er) {
-            logger.error("获取ua版本失败。");
-        }
+//        try {
+//            v = Long.valueOf(redisClient.getString(RedisPrefix.UA_VERSION));
+//        } catch (Exception er) {
+//            logger.error("获取ua版本失败。");
+//        }
 
-        if (map.size() == 0 || uaVersion == 0 || uaVersion < v) {
+        if (map.size() == 0 ) {
             try {
-                uaVersion = v;
+//                uaVersion = v;
                 mongoClient.changeDb("hippo");
                 mongoClient.getCollection("user_agents");
 
                 MongoSelect select = new MongoSelect();
                 select.where("platform", tf.getPlatform() == Platform.APP ? "app" : "pc");
 
-                List<UserAgentInfo> tasks = mongoClient.selectList(select, UserAgentInfo.class);
+                List<UserAgentInfo> uas = mongoClient.selectList(select, UserAgentInfo.class);
                 ConcurrentHashMap<String, List<UserAgentInfo>> finalMap = map;
 
                 finalMap.clear();
 
-                tasks.forEach(r -> {
+                uas.forEach(r -> {
 
                     String uaKey = "";
 
@@ -92,8 +90,8 @@ public class UAFilter implements IFilter {
                     }
                     list.add(r);
                 });
-                uaVersion = System.currentTimeMillis();
-                redisClient.set(RedisPrefix.UA_VERSION, uaVersion);
+//                uaVersion = System.currentTimeMillis();
+//                redisClient.set(RedisPrefix.UA_VERSION, uaVersion);
             } catch (Exception er) {
                 logger.error(er);
             }
@@ -123,23 +121,23 @@ public class UAFilter implements IFilter {
 
     public void initUaPercent(TaskFragment tf) {
         long v = 0;
-        try {
-            v = Long.valueOf(redisClient.getString(RedisPrefix.UA_VERSION));
-        } catch (Exception er) {
-            logger.error("获取UA分布比例版本失败。");
-        }
+//        try {
+//            v = Long.valueOf(redisClient.getString(RedisPrefix.UA_VERSION));
+//        } catch (Exception er) {
+//            logger.error("获取UA分布比例版本失败。");
+//        }
 
-        if (appBrowserPercent.size() == 0 || uaVersion == 0 || uaVersion < v) {
+        if (appBrowserPercent.size() == 0 ) {
             appBrowserPercent.clear();
             selectBrowser("app");
         }
 
-        if (pcBrowserPercent.size() == 0 || uaVersion == 0 || uaVersion < v) {
+        if (pcBrowserPercent.size() == 0 ) {
             pcBrowserPercent.clear();
             selectBrowser("pc");
         }
 
-        if (appDeviceInfoPercent.size() == 0 || uaVersion == 0 || uaVersion < v) {
+        if (appDeviceInfoPercent.size() == 0 ) {
             try {
                 mongoClient.changeDb("hippo");
                 mongoClient.getCollection("device_percents");
@@ -177,7 +175,7 @@ public class UAFilter implements IFilter {
         Proxy proxy = (Proxy) context.getObject("proxy");
 
         if (proxy == null) {
-            logger.info("no proxy available");
+//            logger.info("no proxy available");
             return null;
         }
 

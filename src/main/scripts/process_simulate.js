@@ -1,9 +1,6 @@
 var page = require('webpage').create();
 var system = require('system');
 
- page.viewportsize={width:375,height:667};
-
-
 var args = system.args;
 if (args.length < 2) {
     phantom.exit();
@@ -42,12 +39,23 @@ if (args.length < 2) {
         page.settings.resourceTimeout = 5 * 1000;
     }
 
+    if (en.platform === "PC"){
+        page.viewportsize={width:1400,height:900};
+    }else{
+        page.viewportsize={width:375,height:667};
+    }
+
     var ua = args[3];
     ua = ua.replace(new RegExp("@", "gm"), " ").replace(new RegExp("\x22", "gm"), "");
     page.settings.userAgent = ua;
-    if (en.referer !== "" && en.referer !== null) {
-        page.settings.referrer = en.referer;
-    }
+
+
+    var refs = en.referer.split(",");
+    var rk = Math.random();
+    var ix = Math.round(rk * refs.length);
+    var ref = refs[ix];
+    page.settings.referrer = ref;
+
 
     // page.settings.loadImages = false;
 
@@ -89,11 +97,6 @@ if (args.length < 2) {
         }
     };
 
-    page.onResourceTimeout = function(e) {
-        if (e.url.toString() !== "about:blank" && e.url.toString() !== en.url){
-            forceSuccess = true;
-        }        // the url whose request timed out
-    };
     // page.settings.resourceTimeout = en.waitTimeout * 1000;
     var taskCount = 0;
     var taskCountFinal = 0;
@@ -111,69 +114,124 @@ if (args.length < 2) {
         }
     }
 
+    page.onResourceTimeout = function(e) {
+        if (e.url.toString() !== "about:blank" && e.url.toString() !== en.url){
+            forceSuccess = true;
+            // console.log("for monitor: url:"+e.url +" taskId:"+en.taskId+" uuid:"+en.uuid)
+        }        // the url whose request timed out
+    };
+
+
+    page.onResourceError = function(e) {
+        if (en.disableImg === 1) {
+            console.log("for monitor:resource error url:" + e.url + " taskId:" + en.taskId + " uuid:" + en.uuid);
+        }
+    };
+
+    page.onResourceReceived = function(response) {
+        if (en.disableImg === 1) {
+            console.log('for monitor: Response (#' + response.id + ', stage "' + response.stage + '"): ' + JSON.stringify(response) + " taskId:" + en.taskId + " uuid:" + en.uuid);
+        }
+    };
+    page.onResourceRequested = function(requestData, networkRequest) {
+        // console.log('for monitor: Request (#' + requestData.id + '): ' + JSON.stringify(requestData) +" taskId:"+en.taskId+" uuid:"+en.uuid);
+        if (en.disableImg === 1 && (requestData.url.match(/.*.jpg$/g) || requestData.url.match(/.*.png/g))){
+            console.log("for monitor: request url canceled "+requestData.url+" taskId:"+en.taskId+" uuid:"+en.uuid);
+            networkRequest.cancel();
+        }
+    };
+
     var times = 0;
 
     function execute(task) {
-        //var timestamp=new Date().getTime();
         var subFragments = task.subFragments;
         // console.log(JSON.stringify(task))
-        if (task.referer !== "" && task.referer !== null) {
-            page.settings.referrer = task.referer;
-        }
+        page.settings.referrer = task.referer;
+
         taskCount = taskCount - 1;
+        var timestamp=new Date().getTime();
         page.open(task.url, function (status) {
+            var finishTime=new Date().getTime();
+            console.log("for monitor: request time, taskId:" + task.taskId + " proxy:" + task.proxyStr + " time:" + (finishTime - timestamp) + " status:"+status);
+            console.log("for monitor: open url "+task.url+" taskId:"+task.taskId+" uuid:"+task.uuid +" status:"+status);
 
             times = times + task.waitTimeout;
 
             var navigateError = false;
-            if (page.url.indexOf("http://ifengad.3g.ifeng.com") >= 0
-            && page.url === task.url){
+            if (page.url.indexOf("http://ifengad.3g.ifeng.com") >= 0 && page.url === task.url) {
                 navigateError = true;
+                console.log("for monitor: system error, response "+status+",url do not changed,taskId:"+task.taskId);
             }
 
             if ((loadFinished || status === "success" || forceSuccess) && !adError && !navigateError) {
                 var cs = phantom.cookies;
-                successCount = successCount+1;
+                successCount = successCount + 1;
                 var cookiesRes = [];
-                for (var i in cs){
+                for (var i in cs) {
                     // if (cs[i].domain.indexOf(".ifeng.com")>0){
-                        cookiesRes.push(cs[i])
+                    cookiesRes.push(cs[i])
                     // }
                 }
 
                 console.log("cookie:" + JSON.stringify(cookiesRes));
+
                 if (successCount === taskCountFinal) {
                     console.log("open success");
-                    if (task.forceArrive === 1) {
-                        var seed = Math.random();
-                        var rand = Math.round(seed * 100);
-                        if (rand < 30) {
-                            if (page.injectJs(task.scriptPath)) {
-                                var arr = [
-                                    [["MAIN#maincontent > DIV:nth-child(5) > DIV:nth-child(1) > DIV:nth-child(1) > DIV:nth-child(3) > DIV:nth-child(2) > DIV:nth-child(2) > DIV:nth-child(2) > UL:nth-child(1) > LI:nth-child(1) > A:nth-child(1) > PICTURE:nth-child(1) > IMG:nth-child(5)" ,[575, 542, 527, 409]]],
-                                    [["A#account-btn", [713, 159, 665, 26]]],
-                                    [["MAIN#maincontent > DIV:nth-child(4) > DIV:nth-child(1) > DIV:nth-child(2) > UL:nth-child(2) > LI:nth-child(1) > A:nth-child(1) > SPAN:nth-child(1)",[407, 605, 359, 472]]],
-                                    [["MAIN#maincontent > DIV:nth-child(4) > DIV:nth-child(1) > DIV:nth-child(2) > UL:nth-child(2) > LI:nth-child(3) > A:nth-child(1) > SPAN:nth-child(1)", [414, 717, 366, 584]]]
-                                ];
-                                var seed = Math.random();
-                                var rand = Math.round(seed * 4);
-                                var data = arr[rand];
+                    if (task.taskType === "CLICK") {
+                            window.setTimeout(function () {
+                                var s1 = Math.random();
+                                var r1 = Math.round(s1 * 100);
 
-                                page.evaluate(function (data) {
-                                    cacheEvent(data)
-                                }, data);
-                            }
-                        }
+                                if ("" !== task.behaviourData) {
+                                    if (r1 < 50 || ("" === task.executeScript)) {
+                                        task.behaviourData = decodeURIComponent(task.behaviourData);
+                                        var seed = Math.random();
+                                        var rand = Math.round(seed * 100);
+                                        if (rand < task.activeProportion) {
+                                            if (page.injectJs(task.scriptPath)) {
+                                                var dt = JSON.parse(task.behaviourData);
+
+                                                page.evaluate(function (data) {
+                                                    cacheEvent(data)
+                                                }, dt);
+                                            }
+                                        }
+                                    }else if ("" !== task.executeScript){
+                                        var seed = Math.random();
+                                        var rand = Math.round(seed * 100);
+                                        if (rand < task.shellProportion) {
+                                            var script = decodeURIComponent(task.executeScript);
+                                            page.evaluateJavaScript(script);
+                                        }
+                                    }
+                                } else if ("" !== task.executeScript){
+                                    var seed = Math.random();
+                                    var rand = Math.round(seed * 100);
+                                    if (rand < task.shellProportion) {
+                                        var script = decodeURIComponent(task.executeScript);
+                                        page.evaluateJavaScript(script);
+                                    }
+                                }
+                            }, 10 * 1000);
+
+                        //互动
+                        window.setTimeout(function () {
+                            page.evaluate(function (data) {
+                                var as = document.getElementsByTagName("a");
+                                var len = as.length;
+                                var seed = Math.random();
+                                var rand = Math.round(seed * len);
+                                as[rand].target="_self";
+                                as[rand].click();
+                            });
+                        }, 35 * 1000);
                     }
                 }
-
             } else {
                 // page.render("/data/images/page_error_"+task.taskId+"_"+timestamp+".png");
                 console.log("open error");
                 phantom.exit();
             }
-
-
 
             for (var i in subFragments) {
                 window.setTimeout(function () {

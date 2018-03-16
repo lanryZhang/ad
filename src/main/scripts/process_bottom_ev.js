@@ -15,13 +15,12 @@ if (args.length < 2) {
     var ua = args[3];
     ua = ua.replace(new RegExp("@", "gm"), " ").replace(new RegExp("\x22", "gm"), "");
     page.settings.userAgent = ua;
-    if (en.referer !== "" && en.referer !== null) {
-        page.settings.referrer = en.referer;
-    }
+    page.settings.referrer = en.referer;
+
     page.settings.resourceTimeout = 5 * 1000;
     page.settings.loadImages = false;
     // page.settings.resourceTimeout = en.waitTimeout * 1000;
-    execute(en);
+
     var navigateTimes = 0;
     page.onUrlChanged = function(targetUrl) {
         if (targetUrl.toString() !== "about:blank" &&
@@ -30,36 +29,70 @@ if (args.length < 2) {
         }
     };
 
-    function execute(task) {
-        var timestamp = new Date().getTime();
-        if (task.referer !== "" && task.referer !== null) {
-            page.settings.referrer = task.referer;
+    var arrAs = [];
+    page.onConsoleMessage = function(msg, lineNum, sourceId) {
+        if (msg.toString().indexOf("as:") >= 0) {
+            arrAs = JSON.parse(msg.toString().replace("as:",""));
         }
+        console.log(msg);
+    };
+
+    // page.onResourceTimeout = function(e) {
+    //     if (e.url.toString() !== "about:blank" && e.url.toString() !== en.url){
+    //         forceSuccess = true;
+    //         // console.log("for monitor: url:"+e.url +" taskId:"+en.taskId+" uuid:"+en.uuid)
+    //     }        // the url whose request timed out
+    // };
+    //
+    // page.onResourceError = function(e) {
+    //     if (en.disableImg === 1) {
+    //         console.log("for monitor:resource error url:" + e.url + " taskId:" + en.taskId + " uuid:" + en.uuid);
+    //     }
+    // };
+    //
+    // page.onResourceReceived = function(response) {
+    //     if (en.disableImg === 1) {
+    //         console.log('for monitor: Response (#' + response.id + ', stage "' + response.stage + '"): ' + JSON.stringify(response) + " taskId:" + en.taskId + " uuid:" + en.uuid);
+    //     }
+    // };
+    //
+    // page.onResourceRequested = function(requestData, networkRequest) {
+    //     // console.log('for monitor: Request (#' + requestData.id + '): ' + JSON.stringify(requestData) +" taskId:"+en.taskId+" uuid:"+en.uuid);
+    //     if (en.disableImg === 1 && (requestData.url.match(/.*.jpg$/g) || requestData.url.match(/.*.png/g))){
+    //         console.log("for monitor: request url canceled "+requestData.url+" taskId:"+en.taskId+" uuid:"+en.uuid);
+    //         networkRequest.cancel();
+    //     }
+    // };
+
+    function execute(task) {
+
+
         page.open(task.url, function (status) {
             if (status === "success") {
-                // var listUrl = page.evaluate(function () {
-                //
-                //         var el = document.querySelector("body>DIV[class='i_topNews iBox']>DIV[class='i_topNews_slide i_section_main_tj']>DIV[class='i_topNews_slide_main']>UL>LI>A[class='i_con']");
-                //         if (el !== null && el.href !== ""){
-                //             return el.href;
-                //         }
-                //     return "";
-                // });
 
-                var r1 = Math.random();
-                var max = Math.round(r1 * 20);
-                var min = 12;
-                var len = max > min ? max : min;
+                page.evaluate(function () {
+                    var as =document.querySelectorAll("div[class='i_topNews_slide_main']>ul>li>a[class='i_con']");
+                    var arr=[]; for (var i = 0 ; i < as.length;i++){
+                        arr.push(as[i].href);
+                    }
+                    var bs = document.querySelectorAll("div[id='zxlb']>a[class='i_con']");
+                    for (var i = 0 ; i < bs.length;i++){
+                        arr.push(bs[i].href);
+                    }
+                    console.log("as:"+JSON.stringify(arr))
+                });
 
-                var imgUrl = "http://inews.ifeng.com/53444315/news.shtml?ch=qd_lykj_dl2#imgnum=";
-                for (var i = 0; i < len; i++) {
-                    window.setTimeout(function () {
-                        page.open(imgUrl+i.toString(),function (s1) {
-                            // console.log("Status:"+s1);
-                            // console.log("pageURL:"+ listUrl[i])
-                        });
-                    },i * 1 * 1000)
-                }
+                window.setInterval(function () {
+                    var r2 = Math.random();
+                    var index = Math.round(r2 * arrAs.length);
+                    page.settings.referrer = task.referer;;
+
+                    page.open(arrAs[index]+"?ch="+task.finishedFlag, function (s1) {
+                        // console.log("Status:"+s1);
+                        // console.log("pageURL:"+ listUrl[i])
+                    });
+                }, 3000);
+
                 if (status === "success") {
                     // page.render("/data/images/page_" + task.taskId + "_" + timestamp + ".png")
                     console.log("open success");
@@ -68,12 +101,14 @@ if (args.length < 2) {
                 }
             } else {
                 console.log("open error");
+                phantom.exit();
             }
         });
     }
 
+    execute(en);
+
     window.setTimeout(function () {
         phantom.exit();
     }, en.waitTimeout  * 1000);
-
 }

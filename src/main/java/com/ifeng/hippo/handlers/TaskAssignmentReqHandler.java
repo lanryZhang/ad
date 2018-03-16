@@ -17,6 +17,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleStateEvent;
 import org.apache.log4j.Logger;
+
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -33,15 +34,20 @@ public class TaskAssignmentReqHandler extends SimpleChannelInboundHandler<BaseMe
     private final static Logger logger = Logger.getLogger(TaskAssignmentReqHandler.class);
     private ExecutorService es = Executors.newFixedThreadPool(1);
     private WorkerExecutor we;
-    public TaskAssignmentReqHandler(){}
-    public TaskAssignmentReqHandler(Context context){
+
+    public TaskAssignmentReqHandler() {
+    }
+
+    public TaskAssignmentReqHandler(Context context) {
         this.context = context;
     }
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        context.put("ctx",ctx);
+        context.put("ctx", ctx);
 
-        if (workFuture == null && we == null){
+        if (workFuture == null && we == null) {
+            /** 任务处理器 */
             we = new WorkerExecutor(context);
             ShutdownManager.regist(we);
             workFuture = es.submit(we);
@@ -50,14 +56,14 @@ public class TaskAssignmentReqHandler extends SimpleChannelInboundHandler<BaseMe
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        if (we != null){
+        if (we != null) {
             try {
                 if (workFuture != null)
                     workFuture.cancel(true);
                 we.cleanup();
                 we = null;
                 workFuture = null;
-            }catch (Exception er){
+            } catch (Exception er) {
                 logger.error(er);
             }
         }
@@ -66,18 +72,21 @@ public class TaskAssignmentReqHandler extends SimpleChannelInboundHandler<BaseMe
     @Override
     public void channelRead0(ChannelHandlerContext ctx, BaseMessage msg) throws Exception {
         try {
-           if (msg.getHeader() != null && msg.getHeader().getType() == MessageType.TASK_ASSIGN_RESP) {
+            /** 接收服务端返回的任务列表 存入worker任务队列 */
+            if (msg.getHeader() != null && msg.getHeader().getType() == MessageType.TASK_ASSIGN_RESP) {
                 List<TaskFragment> res = (List<TaskFragment>) msg.getBody();
-               if (res != null) {
-                   logger.debug("get master response, task num : " + res.size());
-                   for (TaskFragment item : res) {
-                       DataManager.getWorkerQueue().offer(item);
-                   }
-               }
+                if (res != null) {
+                    StringBuilder sb = new StringBuilder();
+                    for (TaskFragment item : res) {
+                        DataManager.getWorkerQueue().offer(item);
+                        sb.append(item.getTaskId()).append(",");
+                    }
+                    logger.debug("get master response, task num : " + res.size()+" task detail:"+sb.toString());
+                }
             } else {
                 ctx.fireChannelRead(msg);
             }
-        } catch (Exception er){
+        } catch (Exception er) {
             logger.error(er);
         }
     }

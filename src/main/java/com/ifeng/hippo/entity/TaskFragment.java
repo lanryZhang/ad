@@ -115,9 +115,131 @@ public class TaskFragment {
 
     private long beginTime;
     private String groupId;
+    /**
+     * 是否独享代理池
+     */
+    private int exclusiveProxy;
+    /**
+     * 指定代理，默认为“”
+     */
+    private List<String> appointProxyName;
+
     private int forceWait;
 
     private String mainScriptPath;
+
+    private String behaviourData;
+
+    /**
+     * 行为数据互动比例
+     */
+    private int activeProportion;
+    /**
+     * 脚本互动比例
+     */
+    private int shellProportion;
+
+
+    public int getActiveProportion() {
+        return activeProportion;
+    }
+
+    public void setActiveProportion(int activeProportion) {
+        this.activeProportion = activeProportion;
+    }
+
+    public int getShellProportion() {
+        return shellProportion;
+    }
+
+    public void setShellProportion(int shellProportion) {
+        this.shellProportion = shellProportion;
+    }
+    /**
+     * 是否禁用图片
+     */
+    private int disableImg;
+
+    public int getDisableImg() {
+        return disableImg;
+    }
+
+    public void setDisableImg(int disableImg) {
+        this.disableImg = disableImg;
+    }
+
+    /**
+     * 可执行脚本
+     */
+    private String executeScript;
+
+    /**
+     * 代理信息
+     */
+    private String proxyStr;
+
+    /**
+     * 用户兴趣标签
+     */
+    private List<Integer> interest;
+
+    /**
+     * 用户信息标签
+     */
+    private List<Integer> userInfo;
+
+    public List<Integer> getInterest() {
+        return interest;
+    }
+
+    public void setInterest(List<Integer> interest) {
+        this.interest = interest;
+    }
+
+    public List<Integer> getUserInfo() {
+        return userInfo;
+    }
+
+    public void setUserInfo(List<Integer> userInfo) {
+        this.userInfo = userInfo;
+    }
+
+    /**
+     * 监测代码，API任务特有
+     */
+    private String detectionCode;
+
+    public String getDetectionCode() {
+        return detectionCode;
+    }
+
+    public void setDetectionCode(String detectionCode) {
+        this.detectionCode = detectionCode;
+    }
+
+    public String getProxyStr() {
+        return proxyStr;
+    }
+
+    public void setProxyStr(String proxyStr) {
+        this.proxyStr = proxyStr;
+    }
+
+    public String getExecuteScript() {
+        return executeScript;
+    }
+
+    public void setExecuteScript(String executeScript) {
+        this.executeScript = executeScript;
+    }
+    public String getBehaviourData() {
+        return behaviourData;
+    }
+
+    public void setBehaviourData(String behaviourData) {
+        this.behaviourData = behaviourData;
+    }
+
 
     public String getMainScriptPath() {
         return mainScriptPath;
@@ -410,6 +532,22 @@ public class TaskFragment {
 
     public void setParentId(int parentId) {
         this.parentId = parentId;
+    }
+
+    public int getExclusiveProxy() {
+        return exclusiveProxy;
+    }
+
+    public void setExclusiveProxy(int exclusiveProxy) {
+        this.exclusiveProxy = exclusiveProxy;
+    }
+
+    public List<String> getAppointProxyName() {
+        return appointProxyName;
+    }
+
+    public void setAppointProxyName(List<String> appointProxyName) {
+        this.appointProxyName = appointProxyName;
     }
 
     @Override

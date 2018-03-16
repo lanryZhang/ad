@@ -65,6 +65,10 @@ public class ProcessEx{
         }
     }
 
+    /**
+     * 计算任务数量，包含子任务
+     * @param tf
+     */
     private void caculateTaskCount(TaskFragment tf) {
         if (tf == null){
             return;
@@ -77,6 +81,11 @@ public class ProcessEx{
         }
     }
 
+    public void close(){
+        if (process != null){
+            process.destroy();
+        }
+    }
     private int successCount = 0;
     private String returnStr = "open error";
     private KeyValuePair<String,String> resKv = new KeyValuePair<>();

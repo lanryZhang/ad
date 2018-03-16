@@ -20,7 +20,7 @@ var html = ""
 
 function a(dt) {
 
-    html = "<a id='a_' target=_blank href='{{click}}' onclick='opendsp_click()'><img src='{{img}}' border=0 /></a>";
+    html = "<a id='a_' target='_self' href='{{click}}' onclick='opendsp_click()'><img src='{{img}}' border=0 /></a>";
     reg = /{{(\w*?)}}/gi;
          str = "";
          data = dt.items[0];
@@ -29,7 +29,6 @@ function a(dt) {
     str += html.replace(reg, function (a, b) {
         return data[b].toString() || ""
     });
-    console.log("str------"+str);
     var _div = document.createElement('div');
     _div.innerHTML = str ;
     document.body.appendChild(_div);

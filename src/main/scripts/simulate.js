@@ -1,4 +1,10 @@
 function dispatchClick(dom, position, timing) {
+    // console.log('dom')
+    // console.log(dom)
+    // console.log(document.getElementById('demo-slider-0') && document.getElementById('demo-slider-0').innerHTML)
+    // console.log(document.querySelector('body > ul > li:nth-child(1) > div > a > img'))
+    // console.log(document.querySelector('DIV#demo-slider-0'))
+    // console.log(document.querySelector(dom))
     var ele = prettieNode(document.querySelector(dom));
     var _position = prettiePosition(position);
     var clickEvent = createClickEvent(_position);
@@ -13,6 +19,8 @@ function dispatchClick(dom, position, timing) {
 }
 
 function prettieNode(node) {
+    console.log('node')
+    console.log(node)
     switch (node.tagName.toLocaleLowerCase()) {
         case 'a':
             node.target = '_self';
@@ -83,6 +91,9 @@ var _eventsCache = [];
 var flag = false;
 
 function cacheEvent(events) {
+    console.log('_eventsCache')
+    console.log(events)
+    console.log(_eventsCache)
     events.forEach(function(_event){
         _eventsCache.push(_event);
     })

@@ -1,20 +1,29 @@
 package com.ifeng.hippo.mongo;
 
 
+import com.ifeng.configurable.ComponentConfiguration;
+import com.ifeng.configurable.Context;
 import com.ifeng.mongo.MongoCli;
 import com.ifeng.mongo.query.Where;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class MongoFactory {
-
-	private static ThreadLocal<MongoCli> mongoThreadLocal  = new ThreadLocal<>();
-
 	private static MongoCli instance;
+	private static String path;
+	private static int port;
+	private static HashMap<String,Context> map;
+
+	public static void initAllInstance(String path){
+		ComponentConfiguration componentConfiguration = new ComponentConfiguration();
+		map = componentConfiguration.load(path+"/conf/mongo.properties");
+	}
 
 	/**
 	 * 默认数据库
@@ -46,42 +55,26 @@ public class MongoFactory {
 		list.add(addr18);
 		return new MongoCli(list,new ArrayList<>());
 	}
-//
+
 	public static MongoCli createMongoClient(){
-		ServerAddress addr20 = new ServerAddress("172.31.48.36", 27000);
+		Context context= map.get("hippo");
+
+		ServerAddress addr20 = new ServerAddress(context.getString("host"), context.getInt("port"));
 		List<ServerAddress> list = new ArrayList<>();
 		list.add(addr20);
-		MongoCredential mc = MongoCredential.createScramSha1Credential("hippo", "hippo", "1qazXSW@".toCharArray());
+		MongoCredential mc = MongoCredential.createScramSha1Credential(context.getString("username"),
+				context.getString("database"), context.getString("pwd").toCharArray());
 		return new MongoCli(list, Arrays.asList(mc));
 	}
 
 	public static MongoCli createAdMongoClient(){
-		ServerAddress addr20 = new ServerAddress("172.31.48.36", 27000);
+		Context context= map.get("AdsFlowLog");
+
+		ServerAddress addr20 = new ServerAddress(context.getString("host"), context.getInt("port"));
 		List<ServerAddress> list = new ArrayList<>();
 		list.add(addr20);
-		MongoCredential mc = MongoCredential.createScramSha1Credential("hippo", "AdsFlowLog", "1qazXSW@".toCharArray());
+		MongoCredential mc = MongoCredential.createScramSha1Credential(context.getString("username"),
+				context.getString("database"), context.getString("pwd").toCharArray());
 		return new MongoCli(list, Arrays.asList(mc));
 	}
-
-//	public static MongoCli createMongoClient(){
-//		ServerAddress addr20 = new ServerAddress("10.50.16.20", 27017);
-//		List<ServerAddress> list = new ArrayList<>();
-//		list.add(addr20);
-//		MongoCredential mc = MongoCredential.createScramSha1Credential("ifeng", "admin", "1qazXSW@3edc".toCharArray());
-//		return new MongoCli(list, Arrays.asList(mc));
-//	}
-//
-//	public static MongoCli createAdMongoClient(){
-//		ServerAddress addr20 = new ServerAddress("10.50.16.20", 27017);
-//		List<ServerAddress> list = new ArrayList<>();
-//		list.add(addr20);
-//		MongoCredential mc = MongoCredential.createScramSha1Credential("ifeng", "admin", "1qazXSW@3edc".toCharArray());
-//		return new MongoCli(list, Arrays.asList(mc));
-//	}
-//	public static MongoCli createMongoClient(){
-//		ServerAddress addr20 = new ServerAddress("10.50.16.20", 27017);
-//		List<ServerAddress> list = new ArrayList<>();
-//		list.add(addr20);
-//		return new MongoCli(list, new ArrayList<>());
-//	}
 }

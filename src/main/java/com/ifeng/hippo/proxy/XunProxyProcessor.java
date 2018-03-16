@@ -15,6 +15,7 @@ import com.ifeng.hippo.utils.HttpUtils;
 import org.apache.log4j.Logger;
 
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -57,7 +58,7 @@ public class XunProxyProcessor extends AbsHttpProxyExecutor {
                     String clickKey = String.format(RedisPrefix.PROXY_IP_LIST_IDC, RedisPrefix.CNC);
                     String evKey = String.format(RedisPrefix.PROXY_IP_LIST_EV_IDC, RedisPrefix.CNC);
 
-                    pushRedis(clickKey, evKey, sb.toString(), addr);
+//                    pushRedis(clickKey, evKey, sb.toString(), addr);
 
                 } catch (Exception er) {
                     logger.error(er);

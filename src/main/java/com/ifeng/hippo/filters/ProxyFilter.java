@@ -44,6 +44,18 @@ public class ProxyFilter implements IFilter {
         String proxyStr = null;
         TaskFragment tf = (TaskFragment) context.getObject("taskFragment");
         String proxyIdListKey = tf.getTaskType() == TaskType.EV ? RedisPrefix.PROXY_IP_LIST_EV_IDC : RedisPrefix.PROXY_IP_LIST_IDC;
+        /**
+         * 如果是独享代理池的话，改为独享代理池key，如果是指定代理改为指定代理key
+         */
+        if (tf.getAppointProxyName() != null && tf.getAppointProxyName().size() > 0){
+            proxyIdListKey = RedisPrefix.PROXY_IP_LIST_IDC_APPOINT;
+            proxyIdListKey = proxyIdListKey + "_" + tf.getTaskId();
+            logger.debug("change proxyKey to appoint for :" + tf.getTaskId());
+        } else if (tf.getExclusiveProxy() == 1) {
+            proxyIdListKey = RedisPrefix.PROXY_IP_LIST_IDC_EXCLUSIVE;
+            proxyIdListKey = proxyIdListKey + "_" + tf.getTaskId();
+            logger.debug("change proxyKey to exclusive for :" + tf.getTaskId());
+        }
         proxyIdListKey = String.format(proxyIdListKey,context.getString("netName"));
         List<String> proxyKeyList = new ArrayList<>();
         if (tf.getProvinces() != null){
@@ -62,13 +74,22 @@ public class ProxyFilter implements IFilter {
         String[] proxyFilters = str.split(",");
 
         try {
-            int repeat = 50;
+            int repeat = 30;
+
+            if (tf.getTaskType() == TaskType.EV){
+                repeat = 5;
+            }
+
+            int repeatTimes = 0;
 
             while (--repeat >= 0){
                 try {
+                    repeatTimes++;
+
                     proxyStr = redisClient.lpopString(proxyIdListKey);
                     if (proxyStr == null || "".equals(proxyStr)) {
-                        Thread.currentThread().sleep(5);
+                        logger.info("get none proxy from redis for task:"+tf.getTaskId());
+                        Thread.currentThread().sleep(0);
                         continue;
                     } else {
                         String[] arr = proxyStr.split("#");
@@ -78,11 +99,13 @@ public class ProxyFilter implements IFilter {
 
                         if (timeDiff > expire){
                             proxyStr = "";
+                            /** 以便于快速清空无效代理 */
+                            repeat ++;
                             continue;
                         }
-
+                        
                         boolean doFilter = false;
-                        for (String p : proxyFilters){
+                        for (String p : proxyFilters) {
                             if (p.equals(arr[5])){
                                 doFilter = true;
                                 break;
@@ -91,7 +114,9 @@ public class ProxyFilter implements IFilter {
 
                         if (doFilter) continue;
 
-                        if (tf.getForceWait() == 1 && expire - timeDiff > (tf.getWaitTimeout() * 1000)){
+                        /** 任务等待时长tf.getWaitTimeout()改成按照30秒计算 */
+                        if (tf.getForceWait() == 1 && expire - timeDiff < (30 * 1000)){
+                            logger.info("no proxy available for forcewait task :" + tf.getTaskId() + " repeat:" + repeat);
                             continue;
                         }
                         String key = String.format(RedisPrefix.PROXY_PREFIX, arr[9], tf.getTaskId(), DateUtil.today());
@@ -127,6 +152,7 @@ public class ProxyFilter implements IFilter {
 
                                 context.put("proxy", proxy);
                                 context.put("proxyPoolKey",proxyIdListKey);
+                                logger.info("proxy "+proxy+" repeat times:"+repeatTimes);
                             }catch (Exception er1){
                                 logger.error(er1);
                                 return false;

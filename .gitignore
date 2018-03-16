@@ -2,3 +2,6 @@
 /classes
 /phantomjsdriver.log
 /src/main/lib
+/target
+/src/main/java/META-INF/*.MF
+/hippo.iml

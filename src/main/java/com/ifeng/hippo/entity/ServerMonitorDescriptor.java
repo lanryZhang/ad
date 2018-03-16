@@ -21,6 +21,7 @@ public class ServerMonitorDescriptor {
     private int workerNumber;
     private int taskParallel;
     private int blockingTaskNumber;
+    private int discardTaskNumber;
     private long updateTime;
     private String taskParallelDesc;
     private long createTime;
@@ -87,5 +88,13 @@ public class ServerMonitorDescriptor {
 
     public void setUpdateTime(long updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public int getDiscardTaskNumber() {
+        return discardTaskNumber;
+    }
+
+    public void setDiscardTaskNumber(int discardTaskNumber) {
+        this.discardTaskNumber = discardTaskNumber;
     }
 }

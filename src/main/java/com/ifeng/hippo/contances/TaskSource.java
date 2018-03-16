@@ -13,7 +13,10 @@ package com.ifeng.hippo.contances;
  */
 public enum TaskSource {
     IFENGAD(0),
-    API(1);
+    API(1),
+    DMP(2),
+    DOL(3),
+    ACCURATEOPERATIONS(4);
 
     private int value;
 

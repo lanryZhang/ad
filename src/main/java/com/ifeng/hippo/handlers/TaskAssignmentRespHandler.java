@@ -46,6 +46,7 @@ public class TaskAssignmentRespHandler extends SimpleChannelInboundHandler<BaseM
                     List<KeyValuePair<String, Integer>> list = (List<KeyValuePair<String, Integer>>) msg.getBody();
 
                     for (KeyValuePair<String, Integer> item : list) {
+                        /** worker 的并行度（最大运行数量） */
                         if ("taskParallel".equals(item.getK())) {
                             taskParallel = item.getV();
                         } else if (DataManager.getProcessCount().containsKey(item.getK())) {
@@ -77,6 +78,7 @@ public class TaskAssignmentRespHandler extends SimpleChannelInboundHandler<BaseM
                 }
 
                 for (int i = 0; i < taskCount; i++) {
+                    /** 取出任务返回给客户端 */
                     TaskFragment tf = DataManager.getMasterQueue().poll();
                     if (tf != null) {
                         res.add(tf);

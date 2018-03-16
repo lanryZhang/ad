@@ -62,6 +62,7 @@ public class Worker implements Configurable,CleanupAware{
                                 arg0.pipeline().addLast(new MessageEncode());
                                 arg0.pipeline().addLast(new IdleStateHandler(10,10,20,TimeUnit.SECONDS));
 //                                arg0.pipeline().addLast(new HeartBeatRespHandler());
+                                /** 用于客户端与服务端通信 */
                                 arg0.pipeline().addLast(new TaskAssignmentReqHandler(context));
                             }
                         });
@@ -71,6 +72,7 @@ public class Worker implements Configurable,CleanupAware{
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
+                /** 如果报错，每5秒重连一次 */
                 executorService.execute(() -> {
                     try {
                         TimeUnit.SECONDS.sleep(5);
@@ -105,5 +107,4 @@ public class Worker implements Configurable,CleanupAware{
         this.port = context.getInt("port");
         this.context = context;
     }
-
 }

@@ -22,6 +22,7 @@ public class WorkerDescriptor {
     private int port;
     private String hostName;
     private int taskParallel;
+    private int threadPoolSize;
     private String workerId;
     private long createTime;
     private int pid;
@@ -118,10 +119,18 @@ public class WorkerDescriptor {
         this.taskParallel = taskParallel;
     }
 
+    public int getThreadPoolSize() {
+        return threadPoolSize;
+    }
+
+    public void setThreadPoolSize(int threadPoolSize) {
+        this.threadPoolSize = threadPoolSize;
+    }
+
     @Override
     public String toString(){
         return new StringBuilder().append("workerId : ").append(workerId)
-                .append(",hostIp :").append(hostIp).append(", taskParallel : ").append(taskParallel)
+                .append(",hostIp :").append(hostIp).append(", taskParallel : ").append(taskParallel).append(", threadPoolSize : ").append(threadPoolSize)
                 .append(", online time : ").append(DateUtil.parseDate(createTime)).toString();
     }
 }
